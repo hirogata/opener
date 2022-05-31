@@ -7,7 +7,7 @@ import (
 	"sigs.k8s.io/yaml"
 )
 
-func LoadOpenerOptionsFromConfig(configPath string, o *OpenerOptions) error {
+func LoadOpenerOptionsFromConfig(configPath string, o *Opener) error {
 	if configPath == "" {
 		dir, err := os.UserHomeDir()
 		if err != nil {

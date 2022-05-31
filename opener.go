@@ -16,50 +16,40 @@ import (
 
 	"github.com/mitchellh/go-homedir"
 	"github.com/pkg/browser"
-	"github.com/spf13/cobra"
 )
 
 var version string
 var commit string
 var date string
 
-type OpenerOptions struct {
+type Opener struct {
 	Network string `yaml:"network"`
 	Address string `yaml:"address"`
 
 	ErrOut io.Writer
 }
 
-func NewOpenerCmd(errOut io.Writer) *cobra.Command {
+func NewOpener(errOut io.Writer)  (*Opener, error) {
 	var configPath string
 
-	o := &OpenerOptions{
+	o := &Opener{
 		Network: "unix",
 		Address: "~/.opener.sock",
 		ErrOut:  errOut,
 	}
 
-	cmd := &cobra.Command{
-		Use: "opener",
-		RunE: func(_ *cobra.Command, args []string) error {
-			if err := LoadOpenerOptionsFromConfig(configPath, o); err != nil {
-				return err
-			}
-
-			if err := o.Validate(); err != nil {
-				return err
-			}
-
-			return o.Run()
-		},
+	if err := LoadOpenerOptionsFromConfig(configPath, o); err != nil {
+		return nil, err
 	}
 
-	cmd.Flags().StringVar(&configPath, "config", configPath, "Path to the opener config file (defaults to ~/.config/opener/config.yaml)")
+	if err := o.Validate(); err != nil {
+		return nil, err
+	}
 
-	return cmd
+	return o, nil
 }
 
-func (o *OpenerOptions) Validate() error {
+func (o *Opener) Validate() error {
 	switch o.Network {
 	case "unix":
 		if runtime.GOOS == "windows" {
@@ -85,7 +75,7 @@ func (o *OpenerOptions) Validate() error {
 	return nil
 }
 
-func (o *OpenerOptions) Run() error {
+func (o *Opener) Run() error {
 	fmt.Fprintf(o.ErrOut, "version: %s, commit: %s, date: %s\n", version, commit, date)
 	fmt.Fprintf(o.ErrOut, "starting a server at %s\n", o.Address)
 
