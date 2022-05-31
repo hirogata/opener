@@ -9,6 +9,7 @@ import (
 	"net"
 	"os"
 	"os/signal"
+	"runtime"
 	"strings"
 	"sync"
 	"syscall"
@@ -61,13 +62,17 @@ func NewOpenerCmd(errOut io.Writer) *cobra.Command {
 func (o *OpenerOptions) Validate() error {
 	switch o.Network {
 	case "unix":
+		if runtime.GOOS == "windows" {
+			return errors.New("Windows does not support UNIX domain socket")
+		}
+
 		address, err := homedir.Expand(o.Address)
 		if err != nil {
 			return err
 		}
 		o.Address = address
 
-		syscall.Umask(0077)
+		// syscall.Umask(0077)
 
 		if err := os.RemoveAll(o.Address); err != nil {
 			return err
